@@ -14,7 +14,11 @@ const router = express.Router();
 // ================= PACKAGE =================
 
 // Vendor creates package
-router.post("/", protect, upload.array("image",5), createVendorPackage);
+router.post("/", (req, res, next) => {
+  console.log("Package route hit");
+  next();
+}, protect, upload.array("images",5), createVendorPackage);
+
 
 // Vendor gets own packages
 router.get("/vendor", protect, getVendorPackages);

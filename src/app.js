@@ -15,10 +15,23 @@ const app = express();
 connectDB();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: ["http://localhost:5173", "http://localhost:5000", "http://localhost:3000"],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+
 app.use(morgan("combined"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+
+app.use("/api/vendor", (req, res, next) => {
+  console.log("Vendor route hit:", req.url);
+  next();
+});
 
 // Routes
 app.use("/api/auth", authRoutes);
