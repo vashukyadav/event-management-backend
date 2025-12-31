@@ -12,20 +12,30 @@ export const register = async (req, res) => {
     if (role === "user") {
       const { name, email, password, city, phone } = req.body;
 
-      const existingUser = await User.findOne({ email });
+      if (!name || !email || !password) {
+        return res.status(400).json({
+          message: "Name, email and password are required",
+        });
+      }
+
+      const existingUser = await User.findOne({
+        email: email.toLowerCase(),
+      });
+
       if (existingUser) {
-        return res.status(400).json({ message: "User already exists" });
+        return res.status(400).json({
+          message: "User already exists",
+        });
       }
 
       const hashedPassword = await bcrypt.hash(password, 10);
 
       const user = await User.create({
         name,
-        email,
+        email: email.toLowerCase(),
         password: hashedPassword,
         city,
         phone,
-        role: "user",
       });
 
       return res.status(201).json({
@@ -46,9 +56,20 @@ export const register = async (req, res) => {
         experience,
       } = req.body;
 
-      const existingVendor = await Vendor.findOne({ email });
+      if (!ownerName || !businessName || !email || !password) {
+        return res.status(400).json({
+          message: "All required fields must be provided",
+        });
+      }
+
+      const existingVendor = await Vendor.findOne({
+        email: email.toLowerCase(),
+      });
+
       if (existingVendor) {
-        return res.status(400).json({ message: "Vendor already exists" });
+        return res.status(400).json({
+          message: "Vendor already exists",
+        });
       }
 
       const hashedPassword = await bcrypt.hash(password, 10);
@@ -56,12 +77,13 @@ export const register = async (req, res) => {
       const vendor = await Vendor.create({
         ownerName,
         businessName,
-        email,
+        email: email.toLowerCase(),
         password: hashedPassword,
-        services,
+        services: services
+          ? services.split(",").map((s) => s.trim())
+          : [],
         city,
         experience,
-        role: "vendor",
       });
 
       return res.status(201).json({
@@ -70,10 +92,14 @@ export const register = async (req, res) => {
       });
     }
 
-    return res.status(400).json({ message: "Invalid role" });
+    return res.status(400).json({
+      message: "Invalid role",
+    });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Server error" });
+    return res.status(500).json({
+      message: "Server error",
+    });
   }
 };
 
@@ -83,30 +109,40 @@ export const login = async (req, res) => {
     const { email, password, role } = req.body;
 
     if (!email || !password || !role) {
-      return res.status(400).json({ message: "All fields are required" });
+      return res.status(400).json({
+        message: "All fields are required",
+      });
     }
 
     let account;
 
     if (role === "user") {
-      account = await User.findOne({ email });
+      account = await User.findOne({ email: email.toLowerCase() });
     } else if (role === "vendor") {
-      account = await Vendor.findOne({ email });
+      account = await Vendor.findOne({ email: email.toLowerCase() });
+
+      if (account && !account.isApproved) {
+        return res.status(403).json({
+          message: "Vendor account not approved yet",
+        });
+      }
     } else {
-      return res.status(400).json({ message: "Invalid role" });
+      return res.status(400).json({
+        message: "Invalid role",
+      });
     }
 
     if (!account) {
-      return res.status(404).json({ message: "Account not found" });
+      return res.status(404).json({
+        message: "Account not found",
+      });
     }
 
-    const isPasswordMatch = await bcrypt.compare(
-      password,
-      account.password
-    );
-
-    if (!isPasswordMatch) {
-      return res.status(401).json({ message: "Invalid credentials" });
+    const isMatch = await bcrypt.compare(password, account.password);
+    if (!isMatch) {
+      return res.status(401).json({
+        message: "Invalid credentials",
+      });
     }
 
     const token = generateToken({
@@ -117,12 +153,18 @@ export const login = async (req, res) => {
     return res.status(200).json({
       message: "Login successful",
       token,
-      role: account.role,
-      userId: account._id,
-      email: account.email,
+      user: {
+        id: account._id,
+        role: account.role,
+        name: account.name || account.businessName,
+        email: account.email,
+        city: account.city,
+      },
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Server error" });
+    return res.status(500).json({
+      message: "Server error",
+    });
   }
 };

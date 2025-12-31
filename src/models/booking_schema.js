@@ -1,21 +1,20 @@
-import  mongoose from 'mongoose';
+import mongoose from 'mongoose';
 
 const bookingSchema = new mongoose.Schema({
-    user_id: {
+    userId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true
     },
-    package_id: {
+    vendorId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Vendor',
+        required: true
+    },
+    packageId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Package',
         required: true
-    },
-    eventType:{
-       type:mongoose.Schema.Types.ObjectId,
-       ref: 'Package',
-       required:true
-
     },
     eventDate: {
         type: Date,
@@ -23,15 +22,15 @@ const bookingSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ['pending', 'confirmed', 'cancelled'],
+        enum: ['pending', 'accepted', 'rejected'],
         default: 'pending'
     },
-    totalAmount:{
-        type:Number,
-        required:true
+    totalAmount: {
+        type: Number,
+        required: true
     }
-});
+}, { timestamps: true });
 
 const Booking = mongoose.model("Booking", bookingSchema);
 
-export default Booking; // ⭐⭐⭐ VERY IMPORTANT
+export default Booking;

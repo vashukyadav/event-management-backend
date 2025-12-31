@@ -158,17 +158,10 @@ export const viewVendorBookings = async (req, res) => {
   try {
     const vendorId = req.user.id;
 
-    const bookings = await Booking.find({ vendor: vendorId })
-      .populate("user", "name email")
-      .populate("package", "title price")
+    const bookings = await Booking.find({ vendorId })
+      .populate("userId", "name email")
+      .populate("packageId", "title price")
       .sort({ createdAt: -1 });
-
-    if (!bookings || bookings.length === 0) {
-      return res.status(200).json({
-        message: "No bookings found for this vendor",
-        bookings: [],
-      });
-    }
 
     return res.status(200).json({
       message: "Vendor bookings fetched successfully",
@@ -189,9 +182,18 @@ export const acceptRejectBooking = async (req, res) => {
   try {
     const vendorId = req.user.id;
     const { bookingId } = req.params;
-    const { action } = req.body; 
-    
-    const booking = await Booking.findById(bookingId);
+    const { action } = req.body; // accept / reject
+
+    if (!["accept", "reject"].includes(action)) {
+      return res.status(400).json({
+        message: "Invalid action",
+      });
+    }
+
+    const booking = await Booking.findOne({
+      _id: bookingId,
+      vendorId,
+    });
 
     if (!booking) {
       return res.status(404).json({
@@ -199,28 +201,12 @@ export const acceptRejectBooking = async (req, res) => {
       });
     }
 
-   
-    if (booking.vendor.toString() !== vendorId) {
-      return res.status(403).json({
-        message: "You are not allowed to update this booking",
-      });
-    }
-
-    
     if (booking.status !== "pending") {
       return res.status(400).json({
         message: "Booking already processed",
       });
     }
 
-    
-    if (!["accept", "reject"].includes(action)) {
-      return res.status(400).json({
-        message: "Invalid action",
-      });
-    }
-
-   
     booking.status = action === "accept" ? "accepted" : "rejected";
     await booking.save();
 
@@ -236,3 +222,4 @@ export const acceptRejectBooking = async (req, res) => {
     });
   }
 };
+

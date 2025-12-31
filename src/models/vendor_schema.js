@@ -5,16 +5,19 @@ const vendorSchema = new mongoose.Schema(
     ownerName: {
       type: String,
       required: true,
+      trim: true,
     },
     businessName: {
       type: String,
       required: true,
+      trim: true,
     },
     email: {
       type: String,
       required: true,
       unique: true,
       lowercase: true,
+      trim: true,
     },
     password: {
       type: String,
@@ -26,13 +29,16 @@ const vendorSchema = new mongoose.Schema(
       default: "vendor",
     },
     services: {
-      type: [String], 
+      type: [String],
+      default: [],
     },
     city: {
       type: String,
+      trim: true,
     },
     experience: {
       type: Number,
+      default: 0,
     },
     isApproved: {
       type: Boolean,
@@ -42,5 +48,4 @@ const vendorSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-const Vendor = mongoose.model("Vendor", vendorSchema);
-export default Vendor;
+export default mongoose.model("Vendor", vendorSchema);

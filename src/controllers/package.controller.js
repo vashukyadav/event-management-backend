@@ -1,183 +1,143 @@
-import  Vendor  from "../models/vendor_schema.js";
-import  Package  from "../models/package_schema.js";
+import Vendor from "../models/vendor_schema.js";
+import Package from "../models/package_schema.js";
 import cloudinary from "../config/cloudinary.js";
-// import { Booking } from "../models/booking_schema.js";
 
+/* ================= VENDOR PROFILE ================= */
 
 export const getVendorProfile = async (req, res) => {
   try {
-    // token se vendor id aayegi
-    const vendorId = req.user.id;
-
-    const vendor = await Vendor.findById(vendorId).select("-password");
+    const vendor = await Vendor.findById(req.user.id).select("-password");
 
     if (!vendor) {
-      return res.status(404).json({
-        message: "Vendor not found",
-      });
+      return res.status(404).json({ message: "Vendor not found" });
     }
 
-    return res.status(200).json({
+    res.status(200).json({
       message: "Vendor profile fetched successfully",
       vendor,
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({
-      message: "Server error",
-    });
+    res.status(500).json({ message: "Server error" });
   }
 };
 
-
-// import { Vendor } from "../models/vendor.model.js";
-
 export const updateVendorProfile = async (req, res) => {
   try {
-    const vendorId = req.user.id;
-
-    // Allowed fields only (security)
-    const {
-      ownerName,
-      businessName,
-      services,
-      city,
-      experience
-    } = req.body;
-
-    const updateData = {
-      ownerName,
-      businessName,
-      services,
-      city,
-      experience
-    };
+    const { ownerName, businessName, services, city, experience } = req.body;
 
     const vendor = await Vendor.findByIdAndUpdate(
-      vendorId,
-      updateData,
+      req.user.id,
+      {
+        ownerName,
+        businessName,
+        city,
+        experience,
+        services: services
+          ? services.split(",").map((s) => s.trim())
+          : [],
+      },
       { new: true }
     ).select("-password");
 
     if (!vendor) {
-      return res.status(404).json({
-        message: "Vendor not found",
-      });
+      return res.status(404).json({ message: "Vendor not found" });
     }
 
-    return res.status(200).json({
+    res.status(200).json({
       message: "Vendor profile updated successfully",
       vendor,
     });
-
   } catch (error) {
     console.error(error);
-    return res.status(500).json({
-      message: "Server error",
-    });
+    res.status(500).json({ message: "Server error" });
   }
 };
 
-
+/* ================= CREATE PACKAGE ================= */
 
 export const createVendorPackage = async (req, res) => {
   try {
-    const vendorId = req.user.id;
+    const { title, eventType, price, includes, maxBudget } = req.body;
 
-    const {
-      title,
-      eventType,
-      price,
-      includes,
-      maxBudget
-    } = req.body;
-
-    console.log("Package creation data:", req.body);
-
-    if (!title || !eventType || !price || !maxBudget) {
+    if (!title || !eventType || !price || !maxBudget || !includes) {
       return res.status(400).json({
-        message: "Required fields are missing",
+        message: "All fields are required",
       });
     }
 
-    // Convert includes string to array
-    const includesArray = includes ? includes.split(',').map(item => item.trim()) : [];
+    const includesArray = includes.split(",").map((i) => i.trim());
 
-    let imageUrls = [];
-    if (req.files && req.files.length > 0) {
+    const imageUrls = [];
+
+    if (req.files?.length) {
       for (const file of req.files) {
-        const uploadResult = await cloudinary.uploader.upload(
+        const result = await cloudinary.uploader.upload(
           `data:${file.mimetype};base64,${file.buffer.toString("base64")}`,
-          {
-            folder: "event_packages",
-          }
+          { folder: "event_packages" }
         );
-
-        imageUrls.push(uploadResult.secure_url);
+        imageUrls.push(result.secure_url);
       }
     }
 
-    const newPackage = await Package.create({
-      vendorId: vendorId,
+    const pkg = await Package.create({
+      vendorId: req.user.id,
       title,
       eventType,
       price: Number(price),
       includes: includesArray,
-      minBudget: Number(price), // Set minBudget same as price
+      minBudget: Number(price),
       maxBudget: Number(maxBudget),
       images: imageUrls,
     });
 
-    return res.status(201).json({
+    res.status(201).json({
       message: "Vendor package created successfully",
-      package: newPackage,
+      package: pkg,
     });
-
   } catch (error) {
-    console.error("Package creation error:", error);
-    return res.status(500).json({
-      message: "Server error: " + error.message,
-    });
+    console.error("Create package error:", error);
+    res.status(500).json({ message: "Server error" });
   }
 };
+
+/* ================= VENDOR PACKAGES ================= */
 
 export const getVendorPackages = async (req, res) => {
   try {
-    const vendorId = req.user.id;
-
-    const packages = await Package
-      .find({ vendorId: vendorId })   // ✅ FIX
+    const packages = await Package.find({ vendorId: req.user.id })
       .sort({ createdAt: -1 });
 
-    return res.status(200).json({
+    res.status(200).json({
       message: "Vendor packages fetched successfully",
       packages,
     });
-
   } catch (error) {
     console.error(error);
-    return res.status(500).json({
-      message: "Server error",
-    });
+    res.status(500).json({ message: "Server error" });
   }
 };
+
+/* ================= PUBLIC PACKAGES ================= */
 
 export const getPublicPackages = async (req, res) => {
   try {
     const packages = await Package.find()
-      .populate("vendorId", "businessName city")
+      .populate({
+        path: "vendorId",
+        match: { isApproved: true },
+        select: "businessName city",
+      })
       .sort({ createdAt: -1 });
 
+    const filteredPackages = packages.filter(p => p.vendorId);
+
     res.status(200).json({
-      success: true,
-      packages,
+      message: "Public packages fetched successfully",
+      packages: filteredPackages,
     });
   } catch (error) {
     console.error("getPublicPackages error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Server error",
-    });
+    res.status(500).json({ message: "Server error" });
   }
 };
-

@@ -1,43 +1,44 @@
 import mongoose from "mongoose";
 
-
-const packageSchema = new mongoose.Schema({
+const packageSchema = new mongoose.Schema(
+  {
     vendorId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Vendor',
-        required: true
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Vendor",
+      required: true,
     },
     title: {
-        type: String,
-        required: true
+      type: String,
+      required: true,
+      trim: true,
     },
     eventType: {
-        type: String,
-        enum: ["wedding", "birthday", "corporate", "anniversary", "others"],
-        required: true
-    }
-    ,
+      type: String,
+      enum: ["wedding", "birthday", "corporate", "anniversary", "others"],
+      required: true,
+    },
     price: {
-        type: Number,
-        required: true,
+      type: Number,
+      required: true,
     },
     includes: {
-        type: [String],
-        required: true
+      type: [String],
+      required: true,
     },
     images: {
-        type: [String],
+      type: [String],
+      default: [],
     },
     minBudget: {
-        type: Number,
-        required: true,
+      type: Number,
+      required: true,
     },
     maxBudget: {
-        type: Number,
-        required: true,
-    }
-}, { timestamps: true });
+      type: Number,
+      required: true,
+    },
+  },
+  { timestamps: true }
+);
 
-const Package = mongoose.model("Package", packageSchema);
-
-export default Package;   // ⭐⭐⭐ IMPORTANT
+export default mongoose.model("Package", packageSchema);
