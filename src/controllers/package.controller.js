@@ -92,13 +92,19 @@ export const createVendorPackage = async (req, res) => {
       maxBudget
     } = req.body;
 
+    console.log("Package creation data:", req.body);
+
     if (!title || !eventType || !price || !maxBudget) {
       return res.status(400).json({
         message: "Required fields are missing",
       });
     }
-       let imageUrls = [];
-     if (req.files && req.files.length > 0) {
+
+    // Convert includes string to array
+    const includesArray = includes ? includes.split(',').map(item => item.trim()) : [];
+
+    let imageUrls = [];
+    if (req.files && req.files.length > 0) {
       for (const file of req.files) {
         const uploadResult = await cloudinary.uploader.upload(
           `data:${file.mimetype};base64,${file.buffer.toString("base64")}`,
@@ -112,13 +118,14 @@ export const createVendorPackage = async (req, res) => {
     }
 
     const newPackage = await Package.create({
-      vendorId: vendorId,   // ✅ MATCH SCHEMA
+      vendorId: vendorId,
       title,
       eventType,
-      price,
-      includes,
-      maxBudget,
-      images:imageUrls,
+      price: Number(price),
+      includes: includesArray,
+      minBudget: Number(price), // Set minBudget same as price
+      maxBudget: Number(maxBudget),
+      images: imageUrls,
     });
 
     return res.status(201).json({
@@ -127,9 +134,9 @@ export const createVendorPackage = async (req, res) => {
     });
 
   } catch (error) {
-    console.error(error);
+    console.error("Package creation error:", error);
     return res.status(500).json({
-      message: "Server error",
+      message: "Server error: " + error.message,
     });
   }
 };
@@ -155,4 +162,22 @@ export const getVendorPackages = async (req, res) => {
   }
 };
 
+export const getPublicPackages = async (req, res) => {
+  try {
+    const packages = await Package.find()
+      .populate("vendorId", "businessName city")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      packages,
+    });
+  } catch (error) {
+    console.error("getPublicPackages error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+};
 

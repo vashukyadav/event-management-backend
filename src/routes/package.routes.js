@@ -1,7 +1,7 @@
 import express from "express";
 import {
   createVendorPackage,
-  getVendorPackages
+  getVendorPackages, getPublicPackages,
 } from "../controllers/package.controller.js";
 
 
@@ -19,6 +19,7 @@ router.post("/", (req, res, next) => {
   next();
 }, protect, upload.array("images",5), createVendorPackage);
 
+router.get("/public", getPublicPackages);
 
 // Vendor gets own packages
 router.get("/vendor", protect, getVendorPackages);
