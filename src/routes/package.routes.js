@@ -2,6 +2,7 @@ import express from "express";
 import {
   createVendorPackage,
   getVendorPackages, getPublicPackages,
+  getPackageById
 } from "../controllers/package.controller.js";
 
 
@@ -19,10 +20,11 @@ router.post("/", (req, res, next) => {
   next();
 }, protect, upload.array("images",5), createVendorPackage);
 
-router.get("/public", getPublicPackages);
-
-// Vendor gets own packages
+// Vendor gets own packages (MUST be before /:id route)
 router.get("/vendor", protect, getVendorPackages);
+
+router.get("/public", getPublicPackages);
+router.get("/:id", getPackageById); 
 
 // ================= BOOKINGS (VENDOR) =================
 

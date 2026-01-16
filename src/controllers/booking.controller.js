@@ -107,9 +107,16 @@ export const getVendorBookings = async (req, res) => {
       .populate("packageId", "title price")
       .sort({ createdAt: -1 });
 
+    // Transform data to match frontend expectations
+    const transformedBookings = bookings.map(booking => ({
+      ...booking.toObject(),
+      user: booking.userId, // Map userId to user for frontend compatibility
+      package: booking.packageId // Map packageId to package for frontend compatibility
+    }));
+
     return res.status(200).json({
       message: "Vendor bookings fetched successfully",
-      bookings,
+      bookings: transformedBookings,
     });
 
   } catch (error) {

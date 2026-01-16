@@ -141,3 +141,27 @@ export const getPublicPackages = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+export const getPackageById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const pkg = await Package.findById(id)
+      .populate("vendorId", "businessName city");
+
+    if (!pkg) {
+      return res.status(404).json({
+        message: "Package not found",
+      });
+    }
+
+    return res.status(200).json({
+      message: "Package fetched successfully",
+      package: pkg,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message: "Server error",
+    });
+  }
+};

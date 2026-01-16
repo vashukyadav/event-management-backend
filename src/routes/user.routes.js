@@ -5,6 +5,7 @@ import {
   getPackageDetail,
   createBooking,
   getUserBookingHistory,
+  changePassword,
 } from "../controllers/user.controller.js";
 
 import { protect } from "../middlewares/auth.middleware.js";
@@ -14,6 +15,9 @@ const router = express.Router();
 
 // 👤 User profile
 router.get("/profile", protect, isUser, getUserProfile);
+
+// 🔒 Change password
+router.put("/change-password", protect, isUser, changePassword);
 
 // 🔍 Browse packages
 router.get("/packages", protect, browsePackages);
