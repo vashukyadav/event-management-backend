@@ -5,6 +5,7 @@ import {
   getUserBookings,
   getVendorBookings,
   updateBookingStatus,
+  cancelBooking,
 } from "../controllers/booking.controller.js";
 
 const router = express.Router();
@@ -20,5 +21,8 @@ router.get("/vendor", protect, getVendorBookings);
 
 // Vendor accepts/rejects booking
 router.put("/:bookingId/status", protect, updateBookingStatus);
+
+// User cancels booking
+router.put("/:bookingId/cancel", protect, cancelBooking);
 
 export default router;

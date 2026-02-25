@@ -2,7 +2,9 @@ import express from "express";
 import {
   createVendorPackage,
   getVendorPackages, getPublicPackages,
-  getPackageById
+  getPackageById,
+  updatePackage,
+  deletePackage
 } from "../controllers/package.controller.js";
 
 
@@ -24,7 +26,9 @@ router.post("/", (req, res, next) => {
 router.get("/vendor", protect, getVendorPackages);
 
 router.get("/public", getPublicPackages);
-router.get("/:id", getPackageById); 
+router.get("/:id", getPackageById);
+router.put("/:id", protect, updatePackage);
+router.delete("/:id", protect, deletePackage); 
 
 // ================= BOOKINGS (VENDOR) =================
 

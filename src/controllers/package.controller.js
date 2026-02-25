@@ -165,3 +165,59 @@ export const getPackageById = async (req, res) => {
     });
   }
 };
+
+export const updatePackage = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, eventType, price, maxBudget, includes } = req.body;
+
+    const pkg = await Package.findById(id);
+    if (!pkg) {
+      return res.status(404).json({ message: "Package not found" });
+    }
+
+    if (pkg.vendorId.toString() !== req.user.id) {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+
+    pkg.title = title || pkg.title;
+    pkg.eventType = eventType || pkg.eventType;
+    pkg.price = price || pkg.price;
+    pkg.maxBudget = maxBudget || pkg.maxBudget;
+    pkg.includes = includes ? includes.split(",").map(i => i.trim()) : pkg.includes;
+
+    await pkg.save();
+
+    return res.status(200).json({
+      message: "Package updated successfully",
+      package: pkg,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const deletePackage = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const pkg = await Package.findById(id);
+    if (!pkg) {
+      return res.status(404).json({ message: "Package not found" });
+    }
+
+    if (pkg.vendorId.toString() !== req.user.id) {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+
+    await Package.findByIdAndDelete(id);
+
+    return res.status(200).json({
+      message: "Package deleted successfully",
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
