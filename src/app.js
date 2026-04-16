@@ -11,10 +11,9 @@ import userRoutes from "./routes/user.routes.js";
 
 const app = express();
 
-// Connect to database
+
 connectDB();
 
-// Middleware
 app.use(cors({
   origin: ["http://localhost:5173", "http://localhost:5000", "http://localhost:3000"],
   credentials: true,
